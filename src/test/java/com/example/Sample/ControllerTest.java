@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.controller.ItemController;
 import com.example.entity.Item;
+import com.example.exception.DemoException;
 import com.example.resource.ItemRequestBody;
 import com.example.service.DemoService;
 import com.example.service.DemoServiceImpl;
@@ -31,16 +32,10 @@ public class ControllerTest {
 
 	@Test
 	public void getUniqueItemsTest() {
-		List<Item> lisItem = new ArrayList<>();
-
-		item.setId("1");
-		item.setTitle("10");
-		item.setBody("wel come to 1800 flowers");
-		item.setUserId("ravi");
-		lisItem.add(item);
-		when(service.getUniqueRecords()).thenReturn(lisItem);
+		
+		when(service.getUniqueRecords()).thenReturn(Long.valueOf(10));
 		itemController.getUniqueItems();
-		assertEquals(itemController.getUniqueItems(), lisItem);
+		assertEquals(itemController.getUniqueItems(), Long.valueOf(10));
 
 	}
 
@@ -51,10 +46,11 @@ public class ControllerTest {
 
 		itemRequest.setBody("1800 flowers");
 		itemRequest.setTitle("1800 flowers");
+		itemRequest.setUserId("1");
 		item.setId("1");
 		item.setTitle("1800 flowers");
 		item.setBody("1800 flowers");
-		item.setUserId("ravi");
+		item.setUserId("1");
 		when(service.updateTitle(itemRequest)).thenReturn(item);
 		itemController.getUpdateItem(itemRequest);
 		assertEquals(itemController.getUpdateItem(itemRequest), item);

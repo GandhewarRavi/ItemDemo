@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -14,25 +15,27 @@ import java.util.stream.Collectors;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.example.controller.ItemController;
 import com.example.entity.Item;
+import com.example.exception.DemoException;
 import com.example.resource.ItemRequestBody;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 @Service
 public class DemoServiceImpl implements DemoService {
-
+	Logger logger =LoggerFactory.getLogger(ItemController.class);
 	@Override
-	public List<Item> getUniqueRecords() {
-
+	public Long getUniqueRecords() {
+     
 		List<Item> getAllItems = getAllItemData();
-
-		List<Item> uniqueData = getAllItems.stream().filter(distinctByKeys(Item::getUserId))
-				.collect(Collectors.toList());
-
-		return uniqueData;
+		Long countOfUniqueRecards=getAllItems.stream().filter(distinctByKeys(Item::getUserId)).count();
+		logger.info("countOfUniqueRecards :", countOfUniqueRecards);
+		return countOfUniqueRecards;
 	}
 
 	private <T> Predicate<T> distinctByKeys(final Function<? super T, ?>... keyExtractors) {
@@ -98,14 +101,22 @@ public class DemoServiceImpl implements DemoService {
 	@Override
 	public Item updateTitle(ItemRequestBody itemRequeast) {
 		
-		Item item =forUpdateData();
-		
-		item.setBody(itemRequeast.getBody());
-		item.setTitle(itemRequeast.getTitle());
-		return item;
+		Item item =forUpdateData(itemRequeast.getUserId());
+		Optional<Item> optionalItem =Optional.ofNullable(item);
+		if(optionalItem.isPresent()) {
+			item.setUserId(itemRequeast.getUserId());
+			item.setBody(itemRequeast.getBody());
+			item.setTitle(itemRequeast.getTitle());
+			logger.info("updated  :", itemRequeast.getUserId());
+			return item;
+		}
+		else {
+			logger.error("record is not found");
+			throw new DemoException();
+		}
 	}
 
-	private Item forUpdateData() {
+	private Item forUpdateData(String userId) {
 
 		DefaultHttpClient httpClient = null;
 		try {
@@ -119,7 +130,7 @@ public class DemoServiceImpl implements DemoService {
 			List<Item> fromJson = gson.fromJson(outPut, new TypeToken<List<Item>>() {
 			}.getType());
 			
-			return fromJson.get(3);
+			return fromJson.get(Integer.parseInt(userId));
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
